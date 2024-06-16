@@ -3,7 +3,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 
 from src.databases.postgres import Base
 
-from sqlalchemy import or_
+from sqlalchemy import or_, text
 from sqlalchemy.orm import validates
 
 from geoalchemy2.types import Geography # Geometry менее точный чем Geography, он не учитывает сферичность земли, использует плоскую модель
@@ -17,8 +17,8 @@ class Users(Base):
     phone = Column(Integer, unique=True)
     email = Column(String, unique=True)
     hashed_password = Column(String, nullable=False)
-    status = Column(String, nullable=False, default='new')
-    date_reg = Column(DateTime, nullable=False, default=func.now()) # TODO проверить корректность работы
+    status = Column(String, nullable=False, server_default=text("'new'"))
+    date_reg = Column(DateTime, nullable=False, server_default=func.now())
     name = Column(String, nullable=False)
     photo = Column(String)
     text = Column(String) 
