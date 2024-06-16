@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException, Response, Depends
 from datetime import datetime, timedelta
 
-from auth.dao import AuthDAO
-from auth.schemas import STokens
+from src.auth.dao import AuthDAO
+from src.auth.schemas import STokens
 from src.config import settings
 from src.auth.auth import get_password_hash, authentificate_user, create_jwt_token, replace_old_password
 from src.auth.constants import access_token_name, refresh_token_name

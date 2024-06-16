@@ -21,7 +21,7 @@ from src.users.models import Users, UsersLocation
 # access to the values within the .ini file in use.
 config = context.config
 config.set_main_option("sqlalchemy.url", f"{settings.DATABASE_URL}?async_fallback=True") 
-# Засетим основную опцию (из alembic.ini) // Т.к. миграции не асинхронные, нам нужно выключить асинхронность
+# Засетим основную опцию (из alembic.ini) // Т.к. миграции не асинхронные - нам нужно выключить асинхронность
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

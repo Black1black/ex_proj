@@ -25,8 +25,8 @@ class Settings(BaseSettings):
     REDIS_HOST: str
     REDIS_PORT: int
 
-    AWS_ACCESS_KEY_ID: str
-    AWS_SECRET_ACCESS_KEY: str
+    MINIO_ACCESS_KEY_ID: str
+    MINIO_SECRET_ACCESS_KEY: str
     SERVICE_NAME: str
     MESSAGE_BUCKET: str
 

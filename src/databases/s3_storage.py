@@ -10,8 +10,8 @@ from src.config import settings
 
 
 s3_session = aioboto3.Session(
-    aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-    aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY
+    aws_access_key_id=settings.MINIO_ACCESS_KEY_ID,
+    aws_secret_access_key=settings.MINIO_SECRET_ACCESS_KEY
 )
 s3_client = s3_session.client(service_name=settings.SERVICE_NAME)
 
