@@ -15,7 +15,6 @@ class UserDialogsDAO(BaseDAOmongo):
         с пагинацией, предварительно по дате последнего сообщения с сортировкой
         от самого нового к старому.
         '''
-        # TODO - добавить индекс по дате
         pipeline = [
             {"$match": {"_id": user_id}},  # Выбор пользователя по id
             {"$unwind": "$activeDialogs"},  # Раскрываем каждый элемент массива activeDialogs в отдельный документ
@@ -43,7 +42,6 @@ class UserDialogsDAO(BaseDAOmongo):
     async def find_dialogs_id(cls, user_id, receiver_id):
         "Поиск айди нужного нам диалога"
 
-        # Инициализация session при помощи уже существующего client'a
         async with await client.start_session() as s:
             # Начало транзакции
             s.start_transaction() # TODO - возможно не нужно тут async with

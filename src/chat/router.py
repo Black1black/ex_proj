@@ -16,17 +16,17 @@ from fastapi import Depends
 
 from src.chat.schemas_collections import SMessage, ObjectIdField, SMessageBody, SFastDialog
 
+from fastapi_cache.decorator import cache
+
 import asyncio
 
 router = APIRouter(prefix='/chat', tags=['Чат'])
 
 
-# WebSocket маршрут для обновления в режиме реального времени
-@router.websocket("/ws/messages")  # TODO на router
-async def websocket_endpoint(websocket: WebSocket):#, user: Users = Depends(get_current_user)):
+@router.websocket("/ws/messages")
+async def websocket_endpoint(websocket: WebSocket, user: Users = Depends(get_current_user)):
     "WebSocket маршрут для обновления в режиме реального времени"
-    print(1)
-    user_id = 1#user.id
+    user_id = user.id
 
     await websocket.accept()
 
@@ -176,6 +176,7 @@ async def get_messages_after_dialog_id(receiver_id: int, message_id: ObjectIdFie
 
 
 @router.get("/dialogs")
+@cache(expire=60)
 async def get_dialogs(last_message_datetime: datetime | None = None,
                       user: Users = Depends(get_current_user)) -> list[SFastDialog]:
     "Эндпоинт получения всех диалогов пользователя, время сообщения используется для пагинации диалогов (В списке диалогов есть последнее сообщение и его дата отправки)"
@@ -183,5 +184,5 @@ async def get_dialogs(last_message_datetime: datetime | None = None,
     user_id = user.id
     dialogs = await UserDialogsDAO.get_user_dialogs(user_id, last_message_datetime)
 
-    return dialogs
+    return dialogs # TODO mappings
 

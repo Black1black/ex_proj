@@ -1,12 +1,7 @@
 # from datetime import datetime
 # from enum import Enum, unique
 
-from pydantic import BaseModel, Field
-# from bson import ObjectId
-
-# from app.chat.schemas_collections import SMessageBody
-
-# добавить валидацию через ObjectId, а не через str
+from pydantic import BaseModel
 
 
 

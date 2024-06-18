@@ -5,8 +5,6 @@ from src.dao.mongo_base import BaseDAOmongo
 from src.databases.mongodb import client
 from src.users.dao import UsersDAO
 
-# from bson import ObjectId
-
 
 
 
