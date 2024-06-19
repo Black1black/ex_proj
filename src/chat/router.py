@@ -4,6 +4,7 @@ from datetime import datetime
 from fastapi import APIRouter, Form, UploadFile, File, WebSocket
 
 from src.auth.dependencies import get_current_user
+from src.chat.constants import online_list
 from src.chat.mongo_dao.messages_dao import MessagesDAO
 from src.chat.mongo_dao.user_dialogs_dao import UserDialogsDAO
 from src.chat.schemas_queries import SMessagesUpdate
@@ -30,12 +31,11 @@ async def websocket_endpoint(websocket: WebSocket, user: Users = Depends(get_cur
 
     await websocket.accept()
 
-    # TODO Ставим онлайн статус
-
-    # Подписка на канал, специфичный для пользователя
+    # Подписка на канал пользователя
     channel = f"user_{user_id}"
 
     await sub.subscribe(channel) # Можно добавить и общий канал
+    await redis.lpush(online_list, user_id) # Добавляем пользователя в онлайн список
 
     try:
         try:
@@ -60,7 +60,7 @@ async def websocket_endpoint(websocket: WebSocket, user: Users = Depends(get_cur
     finally:
         
         await sub.unsubscribe(channel) # Отписка от канала Redis PubSub
-        # TODO Ставим офлайн статус
+        await redis.lrem(online_list, 0, user_id)  # Удаляем пользователя из онлайн списка
 
         await websocket.close()  # TODO проверить нужно ли
 

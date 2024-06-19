@@ -15,18 +15,11 @@ from src.databases.redisdb import redis
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-
-    # redis = aioredis.from_url("redis://localhost")
-
     FastAPICache.init(RedisBackend(redis), prefix="cache")
-
     yield
 
 app = FastAPI(lifespan=lifespan)
 
-
-
-# app = FastAPI()
 app.include_router(auth_router)
 app.include_router(chat_router)
 

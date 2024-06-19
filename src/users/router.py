@@ -4,6 +4,7 @@ from datetime import datetime
 from fastapi import APIRouter, Form, UploadFile, File
 
 from src.auth.dependencies import get_current_user
+from src.chat.constants import online_list
 
 from src.users.dao import UsersDAO
 
@@ -15,6 +16,7 @@ from src.users.models import Users
 from fastapi import Depends
 
 from src.users.schemas import SUsersGet, SUsersMyInfo
+from src.utils.redis_utils import find_in_redis_list
 
 router = APIRouter(prefix='/users', tags=['Пользователи'])
 
@@ -31,7 +33,7 @@ async def get_my_info(
 async def get_user_info(id: int) -> SUsersGet:  # испраить - другая схема - различные варианты
     'Получить модель другого пользователя'
     user = await UsersDAO.find_user(id=id)
-
+    online = await find_in_redis_list(online_list, id)
     # TODO добавить информацию об онлайне
     return user
 

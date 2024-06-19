@@ -9,3 +9,5 @@ redis = redis.Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, encoding
 sub = redis.pubsub()
 
 
+import asyncio
+import redis.asyncio as redis
