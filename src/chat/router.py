@@ -10,8 +10,8 @@ from src.chat.mongo_dao.user_dialogs_dao import UserDialogsDAO
 from src.chat.schemas_queries import SMessagesUpdate
 from src.config import settings
 
-from src.databases.redisdb import sub, redis
-from src.databases.s3_storage import upload_on_storage
+from src.databases.redisdb import RedisConnect
+from src.databases.s3_storage import S3Client
 from src.users.models import Users
 from fastapi import Depends
 
@@ -34,35 +34,29 @@ async def websocket_endpoint(websocket: WebSocket, user: Users = Depends(get_cur
     # Подписка на канал пользователя
     channel = f"user_{user_id}"
 
-    await sub.subscribe(channel) # Можно добавить и общий канал
-    await redis.lpush(online_list, user_id) # Добавляем пользователя в онлайн список
+    redis_connect=RedisConnect()
 
-    try:
-        try:
-            while True:
+    async with redis_connect.get_redis_client() as redis_client:
+        await redis_client.lpush(online_list, user_id)  # Добавляем пользователя в онлайн список
+        async with redis_connect.get_pubsub_client(redis_client) as pubsub:
+            await pubsub.subscribe(channel)  # Подписка на канал пользователя
 
+            try:
+                while True:
+                    message = await pubsub.get_message()  # Чтение сообщений из Redis Pub/Sub
 
+                    if message and message.get('type') == 'message':
+                        msg = message['data']
+                        await websocket.send_text(msg)
 
-                
-                message = await sub.get_message() # Чтение сообщений из Redis PubSub
+                    await asyncio.sleep(1)
 
-                if message and message['type'] == 'message':
-                    msg = message['data']
-
-                    await websocket.send_text(msg)
-
-                await asyncio.sleep(1)
-
-
-        except:
-            return
-
-    finally:
-        
-        await sub.unsubscribe(channel) # Отписка от канала Redis PubSub
-        await redis.lrem(online_list, 0, user_id)  # Удаляем пользователя из онлайн списка
-
-        await websocket.close()  # TODO проверить нужно ли
+            except Exception as e:
+                print(f"WebSocket error: {e}")
+            finally:
+                await pubsub.unsubscribe(channel)  # Отписка от канала Redis Pub/Sub
+                await redis_client.lrem(online_list, 0, user_id)  # Удаляем пользователя из онлайн списка
+                await websocket.close()  # TODO проверить нужно ли
 
        
  
@@ -86,7 +80,7 @@ async def send_message(text: str | None = Form(None),  # Текст сообще
 
 
     if files:
-        uploaded_files_paths = await upload_on_storage(user_id, files, settings.MESSAGE_BUCKET)
+        uploaded_files_paths = await S3Client.upload_on_storage(user_id, files, settings.MESSAGE_BUCKET)
 
     message_body = {
         'files': uploaded_files_paths if files else None,
@@ -114,8 +108,8 @@ async def send_message(text: str | None = Form(None),  # Текст сообще
 
     insert = message_insert.model_dump_json(by_alias=True)
 
-
-    await redis.publish(channel, insert)
+    async with RedisConnect().get_redis_client() as redis_client: # TODO - Проверить корректность отправки
+        await redis_client.publish(channel, insert)
 
     return {"status": "Message sent"}
 

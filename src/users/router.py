@@ -5,6 +5,7 @@ from fastapi import APIRouter, Form, UploadFile, File
 
 from src.auth.dependencies import get_current_user
 from src.chat.constants import online_list
+from src.tasks.tasks import process_pic
 
 from src.users.dao import UsersDAO
 
@@ -53,6 +54,7 @@ async def update_info(name: str | None = Form(None),
         uploaded_files_paths = await upload_on_storage(user_id, files, settings.MESSAGE_BUCKET)
         if uploaded_files_paths:
             photo = uploaded_files_paths[0] # функция возвращает нам список всегда, поэтому вытаскиваем первый ссылочный элемент
+            process_pic.delay(uploaded_files_paths[0]) # task TODO
 
     variables = {
         'name': name,

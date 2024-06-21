@@ -1,5 +1,9 @@
 from src.databases.redisdb import redis
 
+
+from src.databases.redisdb import RedisConnect
+
+
 async def find_in_redis_list(list_name: str, value_to_check: int):
     # Проверка наличия значения в списке с использованием Lua скрипта
     script = """
@@ -22,7 +26,8 @@ async def find_in_redis_list(list_name: str, value_to_check: int):
     """
 
     # Выполнение скрипта на стороне Redis (чтобы не передавать целый список на сервер)
-    found = await redis.eval(script, 1, list_name, value_to_check)
+    async with RedisConnect().get_redis_client() as client:
+        found = await client.eval(script, 1, list_name, value_to_check)
 
     if found:
         print(f'{value_to_check} В {list_name}')
