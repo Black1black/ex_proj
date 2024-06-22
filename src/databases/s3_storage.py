@@ -61,7 +61,8 @@ class S3Client:
         try:
             async with self.get_client() as client:
                 await client.put_object(Body=file, Bucket=self.bucket, Key=s3_file, ContentType=content_type)
-            return f"Upload Success to {s3_file}", s3_file  # Возвращает сообщение об успешной загрузке и путь к файлу
+
+            return f"Upload Success to {s3_file}", s3_file  # TODO - поменять имя, Возвращает сообщение об успешной загрузке и путь к файлу
 
         except ClientError as e:
             print(f"Error uploading file: {e}")

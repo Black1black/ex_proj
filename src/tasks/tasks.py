@@ -1,5 +1,7 @@
+import asyncio
 from pathlib import Path
 
+from src.databases.s3_storage import S3Client
 from src.tasks.celery_init import celery_app
 from PIL import Image
 
@@ -15,6 +17,12 @@ def process_pic(
     ]:
         resized_img = im.resize(size=(width, height)) # TODO - сохранять изначальные пропорции, либо обрезать фото
         resized_img.save(f"app/static/images/resized_{width}_{height}_{im_path.name}") # TODO грузить в s3
+
+@celery_app.task
+def delete_old_pic(s3_file, bucket):
+    "Удаляем старый файл из s3"
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(S3Client(bucket).delete_file(s3_file))
 
 #
 # import asyncio

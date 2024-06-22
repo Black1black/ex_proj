@@ -89,3 +89,7 @@ class SUsersMyInfo(BaseModel):
         return values
 
 
+class SLocation(BaseModel):
+    'Схема для получения данных о локации'
+    latitude: str
+    longitude: str

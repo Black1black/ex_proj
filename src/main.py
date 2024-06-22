@@ -15,17 +15,11 @@ from fastapi_cache.backends.redis import RedisBackend
 
 from src.databases.redisdb import redis
 
-async def get_data():
-    pass
-async def get_cache():
-    await get_data()
-    await asyncio.sleep(5)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     FastAPICache.init(RedisBackend(redis), prefix="cache")
-    await get_data() # при старте приложения
-    asyncio.create_task(get_cache()) # периодическая таска, через await мы бы заблокировали всё приложение
     yield
 
 app = FastAPI(lifespan=lifespan)
@@ -35,9 +29,3 @@ app.include_router(chat_router)
 
  # uvicorn app.main:app --reload
 
-
-
-# @app.on_event("startup")
-# async def startup_event():
-#     'Стартовая инициализация индексов и коллекций в mongo_db'
-#     await init_mongo_collections()

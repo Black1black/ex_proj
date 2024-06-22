@@ -6,6 +6,8 @@ from src.databases.redisdb import RedisConnect
 
 async def find_in_redis_list(list_name: str, value_to_check: int):
     # Проверка наличия значения в списке с использованием Lua скрипта
+    # TODO - лучше в дальнейшем переписать на хэш таблицу чтобы можно было выносить дополнительные данные
+    #  (К примеру - локация) и для оптимизации скорости поиска
     script = """
     local list_name = KEYS[1]
     local value_to_check = ARGV[1]

@@ -6,8 +6,7 @@ from jose import jwt, JWTError
 
 from src.auth.constants import refresh_token_name, access_token_name
 from src.config import settings
-# from src.exceptions import IncorrectTokenFormatException, TokenExpiredException, UserIsNotPresentException, \
-#     TokenAbsentException # TODO кастомные ошибки
+from src.exceptions import IncorrectTokenFormatException, TokenExpiredException, UserIsNotPresentException, TokenAbsentException # TODO кастомные ошибки
 
 from src.users.dao import UsersDAO
 from src.users.models import Users

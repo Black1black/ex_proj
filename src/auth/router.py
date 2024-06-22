@@ -6,6 +6,7 @@ from src.auth.schemas import STokens
 from src.config import settings
 from src.auth.auth import get_password_hash, authentificate_user, create_jwt_token, replace_old_password
 from src.auth.constants import access_token_name, refresh_token_name
+from src.exceptions import UserAlreadyExistsException, IncorrectEmailOrPasswordException
 from src.users.dao import UsersDAO
 from src.auth.dependencies import get_user_refresh_token
 from src.users.schemas import SUsersAuth, SUsersReg
@@ -24,7 +25,7 @@ async def registration_user(user_data: SUsersReg):
     existing_user_mail = await UsersDAO.find_one_or_none(email= user_data.email)
 
     if existing_user_mail:
-        raise HTTPException(status_code=500) # TODO добавить обработку ошибок UserAlreadyExistsException
+        raise UserAlreadyExistsException
     hashed_password = get_password_hash(user_data.password)
     await UsersDAO.add_user(email=user_data.email.lower(), 
                        hashed_password=hashed_password, 
@@ -40,7 +41,7 @@ async def login(response: Response, user_data: SUsersAuth):
 
     user = await authentificate_user(user_data.email.lower(), user_data.password)
     if not user:
-        raise HTTPException(status_code=400, detail="Incorrect username or password")
+        raise IncorrectEmailOrPasswordException
     
     access_token_jwt = create_jwt_token({'sub': str(user.id)})
     refresh_token_jwt = create_jwt_token({'sub': str(user.id)}, is_access=False)
@@ -80,6 +81,11 @@ async def refresh_access_token(response: Response, refresh_token: str = Depends(
     if (int(expire) - datetime.utcnow().timestamp()) < timedelta(days=5).total_seconds():
         
         new_refresh_token = create_jwt_token({'sub': str(user_id)}, is_access=False)
+        await AuthDAO.add_token(user_id=user_id, token=new_refresh_token) # Сохраняем в базе новый токен
+        await AuthDAO.delete(token=refresh_token)
+        # TODO Создать отдельный DAO поинт, который в рамках одной транзакции запишет новый токен и удалит старый
+
+
         response.set_cookie(refresh_token_name, new_refresh_token, httponly=True, secure=True)
 
     tokens_dict = {"access_token": access_token_jwt, "refresh_token": new_refresh_token}
@@ -91,13 +97,15 @@ async def refresh_access_token(response: Response, refresh_token: str = Depends(
 
 
 @router.delete('/logout')
-async def logout_user(response: Response):
+async def logout_user(response: Response, refresh_token: str = Depends(get_user_refresh_token)):
     '''
-        На данном этапе реализована простая система без удаления рефреш токена из БД.
+        На данном этапе реализована простая система.
         В дальнейшем стоит добавить занесение токенов в чс, а не удаление
     '''
     response.delete_cookie(refresh_token_name)
     response.delete_cookie(access_token_name)
+
+    await AuthDAO.delete(token=refresh_token)
 
     return {'message': 'success'}
 

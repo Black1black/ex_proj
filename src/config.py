@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     MINIO_HOST: str
     MINIO_PORT: int
     MESSAGE_BUCKET: str
+    PROFILE_BUCKET: str
 
 
     class Config:

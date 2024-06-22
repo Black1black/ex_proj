@@ -1,8 +1,11 @@
+from geoalchemy2 import WKTElement
+
 from src.dao.base import BaseDAO
  
 from src.users.models import Users, UsersLocation
 from src.databases.postgres import async_session_maker
-from sqlalchemy import select, insert, delete, update
+
+from sqlalchemy import select, insert, delete, update, func, and_, asc, desc, literal
 
 
 class UsersDAO(BaseDAO):
@@ -52,11 +55,20 @@ class UsersDAO(BaseDAO):
         
 
     @classmethod
-    async def find_user(cls, id: int, my_location: dict=None): # TODO добавить корректный тип и показ онлайн
+    async def find_user(cls, id: int, online: bool, my_location: WKTElement=None): # TODO добавить корректный тип и показ онлайн
         'Поиск модели другого пользователя'
+        online_column = literal(online).label('online')
+
+        if my_location:
+            distance_column = func.ST_Distance(UsersLocation.location,
+                                               my_location).label('distance')
+        else:
+            distance_column = literal(-1).label('distance')
         async with async_session_maker() as session:
 
             query = select(
+                distance_column,
+                online_column,
 
                 cls.model.id,
                 cls.model.status,
@@ -77,9 +89,9 @@ class UsersDAO(BaseDAO):
 
 
     @classmethod
-    async def location_update(cls, id, **kwargs): # Изменение данных
+    async def location_update(cls, id, location): # Изменение данных
         'Обновление данных о локации пользователя'
         async with async_session_maker() as session:
-            query = update(UsersLocation).where(UsersLocation.user_id == id).values(**kwargs)
+            query = update(UsersLocation).where(UsersLocation.user_id == id).values(location=location)
             await session.execute(query) # исполняем запрос
             await session.commit() # фиксируем все изменения

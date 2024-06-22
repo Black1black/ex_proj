@@ -12,6 +12,7 @@ from src.config import settings
 
 from src.databases.redisdb import RedisConnect
 from src.databases.s3_storage import S3Client
+from src.exceptions import NullData
 from src.users.models import Users
 from fastapi import Depends
 
@@ -87,6 +88,9 @@ async def send_message(text: str | None = Form(None),  # Текст сообще
         'text': text,
         'publication': publication
     }
+
+    if not uploaded_files_paths and not text and not publication:
+        raise NullData
 
     dialog_id = await UserDialogsDAO.find_dialogs_id(user_id, receiver)
 
