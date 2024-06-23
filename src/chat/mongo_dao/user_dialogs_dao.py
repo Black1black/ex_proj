@@ -1,8 +1,7 @@
-from src.chat.collections import user_dialogs_collection, dialogs_collection
+from src.chat.collections import dialogs_collection, user_dialogs_collection
 from src.chat.schemas_collections import SDialog
 from src.dao.mongo_base import BaseDAOmongo
 from src.databases.mongodb import client
-
 
 
 class UserDialogsDAO(BaseDAOmongo):

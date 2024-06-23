@@ -1,11 +1,9 @@
 
 from src.chat.collections import messages_collection, user_dialogs_collection
-from src.chat.schemas_collections import SUserDialog, SFastDialog, SMessage
+from src.chat.schemas_collections import SFastDialog, SMessage, SUserDialog
 from src.dao.mongo_base import BaseDAOmongo
 from src.databases.mongodb import client
 from src.users.dao import UsersDAO
-
-
 
 
 async def update_active_dialogs(user_id, receiver_id, message, s):

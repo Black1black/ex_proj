@@ -1,6 +1,6 @@
-from src.config import settings
-
 from motor.motor_asyncio import AsyncIOMotorClient
+
+from src.config import settings
 
 # Mongo
 

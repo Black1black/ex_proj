@@ -1,13 +1,12 @@
-from passlib.context import CryptContext
-from jose import jwt
 from datetime import datetime, timedelta
 
+from jose import jwt
+from passlib.context import CryptContext
 from pydantic import EmailStr
 
+from src.auth.constants import access_token_name, refresh_token_name
 from src.config import settings
 from src.users.dao import UsersDAO
-from src.auth.constants import access_token_name, refresh_token_name
-
 
 #------------------------------------------------------------------------------------------#
 ####################### Хэшируем пароль и проверяем его ####################################

@@ -1,11 +1,9 @@
 from geoalchemy2 import WKTElement
+from sqlalchemy import and_, asc, delete, desc, func, insert, literal, select, update
 
 from src.dao.base import BaseDAO
- 
-from src.users.models import Users, UsersLocation
 from src.databases.postgres import async_session_maker
-
-from sqlalchemy import select, insert, delete, update, func, and_, asc, desc, literal
+from src.users.models import Users, UsersLocation
 
 
 class UsersDAO(BaseDAO):

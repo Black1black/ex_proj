@@ -1,8 +1,8 @@
 from datetime import datetime
 from enum import Enum
 
-from pydantic import BaseModel, EmailStr, model_validator, constr
 from geoalchemy2 import WKTElement  # Если нужно использовать специфичный тип Geography
+from pydantic import BaseModel, EmailStr, constr, model_validator
 
 # TODO - прописать алиасы
 

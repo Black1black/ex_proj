@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+
 class AbstractRepository(ABC):
     'Абстрактный класс для реализации работы sqlalchemy и mongo_db'
 

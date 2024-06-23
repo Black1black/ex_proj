@@ -3,7 +3,6 @@
 from src.utils.repository import AbstractRepository
 
 
-
 class BaseDAOmongo(AbstractRepository):
     collection = None
 

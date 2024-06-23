@@ -1,8 +1,9 @@
+from sqlalchemy import delete, insert, select, update
+
 from src.auth.models import AuthToken
 from src.dao.base import BaseDAO
-from src.users.models import Users, UsersLocation
 from src.databases.postgres import async_session_maker
-from sqlalchemy import select, insert, delete, update
+from src.users.models import Users, UsersLocation
 
 
 class AuthDAO(BaseDAO):

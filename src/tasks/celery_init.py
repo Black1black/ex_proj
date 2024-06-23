@@ -1,4 +1,5 @@
 from celery import Celery
+
 from src.config import settings
 
 # celery -A src.tasks.celery_init:celery_app worker --loglevel=INFO

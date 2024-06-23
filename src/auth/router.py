@@ -1,20 +1,23 @@
-from fastapi import APIRouter, HTTPException, Response, Depends
 from datetime import datetime, timedelta
 
-from src.auth.dao import AuthDAO
-from src.auth.schemas import STokens
-from src.config import settings
-from src.auth.auth import get_password_hash, authentificate_user, create_jwt_token, replace_old_password
-from src.auth.constants import access_token_name, refresh_token_name
-from src.exceptions import UserAlreadyExistsException, IncorrectEmailOrPasswordException
-from src.users.dao import UsersDAO
-from src.auth.dependencies import get_user_refresh_token
-from src.users.schemas import SUsersAuth, SUsersReg
+from fastapi import APIRouter, Depends, HTTPException, Response
 from jose import jwt
 
+from src.auth.auth import (
+    authentificate_user,
+    create_jwt_token,
+    get_password_hash,
+    replace_old_password,
+)
+from src.auth.constants import access_token_name, refresh_token_name
+from src.auth.dao import AuthDAO
+from src.auth.dependencies import get_current_user, get_user_refresh_token
+from src.auth.schemas import STokens
+from src.config import settings
+from src.exceptions import IncorrectEmailOrPasswordException, UserAlreadyExistsException
+from src.users.dao import UsersDAO
 from src.users.models import Users
-from src.auth.dependencies import get_current_user
-
+from src.users.schemas import SUsersAuth, SUsersReg
 
 router = APIRouter(prefix='/auth', tags=['Аутентификация и авторизация'])
 

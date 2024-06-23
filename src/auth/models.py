@@ -1,10 +1,18 @@
-from sqlalchemy import Column, Integer, String, DateTime, CheckConstraint, Boolean, Numeric, ForeignKey
+from sqlalchemy import (
+    Boolean,
+    CheckConstraint,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    Numeric,
+    String,
+    or_,
+)
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import validates
 
 from src.databases.postgres import Base
-
-from sqlalchemy import or_
-from sqlalchemy.orm import validates
 
 
 class AuthToken(Base): # Класс нашей таблицы

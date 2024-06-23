@@ -1,5 +1,3 @@
-from src.databases.redisdb import redis
-
 
 from src.databases.redisdb import RedisConnect
 

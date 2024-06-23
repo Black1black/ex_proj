@@ -14,8 +14,8 @@ from src.databases.postgres import Base
 from src.config import settings
 
 # импорты необходимы чтобы alembic видел наши таблицы
-from src.auth.models import AuthToken
-from src.users.models import Users, UsersLocation
+from src.auth.models import AuthToken # noqa
+from src.users.models import Users, UsersLocation # noqa
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

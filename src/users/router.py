@@ -1,20 +1,15 @@
 
-from fastapi import APIRouter, Form, UploadFile, File
+from fastapi import APIRouter, Depends, File, Form, UploadFile
 
 from src.auth.dependencies import get_current_user
 from src.chat.constants import online_list
+from src.config import settings
 from src.databases.s3_storage import S3Client
 from src.exceptions import NullData
 from src.tasks.tasks import delete_old_pic
-
 from src.users.dao import UsersDAO
-
-from src.config import settings
-
 from src.users.models import Users
-from fastapi import Depends
-
-from src.users.schemas import SUsersGet, SUsersMyInfo, SLocation
+from src.users.schemas import SLocation, SUsersGet, SUsersMyInfo
 from src.users.services import create_point
 from src.utils.redis_utils import find_in_redis_list
 

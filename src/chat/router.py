@@ -1,26 +1,26 @@
-from typing import List
+import asyncio
 from datetime import datetime
+from typing import List
 
-from fastapi import APIRouter, Form, UploadFile, File, WebSocket
+from fastapi import APIRouter, Depends, File, Form, UploadFile, WebSocket
+from fastapi_cache.decorator import cache
 
 from src.auth.dependencies import get_current_user
 from src.chat.constants import online_list
 from src.chat.mongo_dao.messages_dao import MessagesDAO
 from src.chat.mongo_dao.user_dialogs_dao import UserDialogsDAO
+from src.chat.schemas_collections import (
+    ObjectIdField,
+    SFastDialog,
+    SMessage,
+    SMessageBody,
+)
 from src.chat.schemas_queries import SMessagesUpdate
 from src.config import settings
-
 from src.databases.redisdb import RedisConnect
 from src.databases.s3_storage import S3Client
 from src.exceptions import NullData
 from src.users.models import Users
-from fastapi import Depends
-
-from src.chat.schemas_collections import SMessage, ObjectIdField, SMessageBody, SFastDialog
-
-from fastapi_cache.decorator import cache
-
-import asyncio
 
 router = APIRouter(prefix='/chat', tags=['Чат'])
 
@@ -135,7 +135,7 @@ async def get_one_message(message_id: ObjectIdField, # ObjectId
 
 @router.patch("/message") 
 async def edit_message(messages_data: SMessagesUpdate, user: Users = Depends(get_current_user)):
-    'Редактирование (удаление) отдельного сообщения'
+    'Редактирование (удаление) отдельного сообщения и проставление статуса "прочитано"'
     user_id = user.id
     result = await MessagesDAO.update_messages(messages_data, user_id)
     return result

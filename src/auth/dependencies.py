@@ -1,13 +1,20 @@
 # Заисимости для проверки, аутонтифицирован ли пользователь
 from datetime import datetime
 
-from fastapi import Request, Depends  # Неопходимо чтобы распарсить информацию о токенах из запроса
-from jose import jwt, JWTError
+from fastapi import (  # Неопходимо чтобы распарсить информацию о токенах из запроса
+    Depends,
+    Request,
+)
+from jose import JWTError, jwt
 
-from src.auth.constants import refresh_token_name, access_token_name
+from src.auth.constants import access_token_name, refresh_token_name
 from src.config import settings
-from src.exceptions import IncorrectTokenFormatException, TokenExpiredException, UserIsNotPresentException, TokenAbsentException # TODO кастомные ошибки
-
+from src.exceptions import (  # TODO кастомные ошибки
+    IncorrectTokenFormatException,
+    TokenAbsentException,
+    TokenExpiredException,
+    UserIsNotPresentException,
+)
 from src.users.dao import UsersDAO
 from src.users.models import Users
 

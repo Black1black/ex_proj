@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 
+
 class STokens(BaseModel):
     'Делаем схему для перевода в camelCase в мобильном приложении'
     access_token: str = Field(alias='accessToken')

@@ -1,8 +1,8 @@
-from src.config import settings
+from contextlib import asynccontextmanager
 
 import redis.asyncio as redis
 
-from contextlib import asynccontextmanager
+from src.config import settings
 
 
 class RedisConnect:

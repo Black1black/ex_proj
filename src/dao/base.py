@@ -1,6 +1,7 @@
+from sqlalchemy import delete, insert, select, update
+
+from src.databases.postgres import async_session_maker, engine
 from src.utils.repository import AbstractRepository
-from src.databases.postgres import async_session_maker, engine 
-from sqlalchemy import select, insert, delete, update
 
 
 class BaseDAO(AbstractRepository):

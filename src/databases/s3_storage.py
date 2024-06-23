@@ -1,17 +1,13 @@
-from fastapi import HTTPException
-from typing import List, Tuple
-from datetime import datetime
-
 import asyncio
-
 from contextlib import asynccontextmanager
+from datetime import datetime
+from typing import List, Tuple
 
 from aiobotocore.session import get_session
 from botocore.exceptions import ClientError
+from fastapi import HTTPException
 
 from src.config import settings
-
-
 
 # http://172.18.0.4:32827/buckets
 # s3_session = aioboto3.Session(

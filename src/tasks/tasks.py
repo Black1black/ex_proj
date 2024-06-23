@@ -1,9 +1,11 @@
 import asyncio
 from pathlib import Path
 
+from PIL import Image
+
 from src.databases.s3_storage import S3Client
 from src.tasks.celery_init import celery_app
-from PIL import Image
+
 
 @celery_app.task
 def process_pic(

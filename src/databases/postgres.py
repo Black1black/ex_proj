@@ -1,9 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-
-from sqlalchemy.orm import sessionmaker, DeclarativeBase
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 from src.config import settings
-
 
 # PostgreSQL
 engine = create_async_engine(settings.DATABASE_URL)
