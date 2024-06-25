@@ -1,14 +1,13 @@
 from datetime import datetime
-from typing import Any
+from typing import Any, Annotated
 
 from bson import ObjectId
 from pydantic import BaseModel, Field, conlist
 from pydantic_core import core_schema
 
 
-class ObjectIdField(str):
-    'Типизация поля типа ObjectId'
-
+class ObjectIdAnnotation:
+    'Необходимо для валидации поля ObjectId в pydantic'
     @classmethod
     def __get_pydantic_core_schema__(
         cls, _source_type: Any, _handler: Any
@@ -20,7 +19,7 @@ class ObjectIdField(str):
             ]
         )
         return core_schema.json_or_python_schema(
-            json_schema=object_id_schema,
+            json_schema=core_schema.str_schema(),
             python_schema=core_schema.union_schema(
                 [core_schema.is_instance_schema(ObjectId), object_id_schema]
             ),
@@ -37,37 +36,14 @@ class ObjectIdField(str):
         return ObjectId(value)
 
 
+# Deprecated, use PydanticObjectId instead.
+class ObjectIdField(ObjectId):
+    @classmethod
+    def __get_pydantic_core_schema__(cls, _source_type: Any, _handler: Any):
+        return ObjectIdAnnotation.__get_pydantic_core_schema__(_source_type, _handler)
 
 
-# class ObjectIdField(ObjectId):
-#     @classmethod
-#     def __get_validators__(cls):
-#         yield cls.validate
-#
-#     @classmethod
-#     def validate(cls, value: Any) -> ObjectId:
-#         """Validates if the provided value is a valid ObjectId."""
-#         if isinstance(value, ObjectId):
-#             return value
-#         if isinstance(value, str) and ObjectId.is_valid(value):
-#             return ObjectId(value)
-#         raise ValueError("Invalid ObjectId")
-# #
-#     @classmethod
-#     def __get_pydantic_core_schema__(
-#             cls, _source_type: Any, _handler: Any
-#     ) -> core_schema.CoreSchema:
-#         """
-#         Defines the core schema for FastAPI documentation.
-#         Creates a JSON schema representation compatible with Pydantic's requirements.
-#         """
-#         return core_schema.json_or_python_schema(
-#             json_schema=core_schema.str_schema(),
-#             python_schema=core_schema.is_instance_schema(ObjectId)
-#         )
-
-
-
+ObjectIdField = Annotated[ObjectId, ObjectIdAnnotation]
 
 #############################################################################
 class SMessageBody(BaseModel):
@@ -139,4 +115,35 @@ class SUserDialog(BaseModel):
 ####################################################################
 
 
+# TODO Deprecated
+
+
+#
+# class ObjectIdField(str):
+#     @classmethod
+#     def __get_pydantic_core_schema__(
+#         cls, _source_type: Any, _handler: Any
+#     ) -> core_schema.CoreSchema:
+#         object_id_schema = core_schema.chain_schema(
+#             [
+#                 core_schema.str_schema(),
+#                 core_schema.no_info_plain_validator_function(cls.validate),
+#             ]
+#         )
+#         return core_schema.json_or_python_schema(
+#             json_schema=object_id_schema,
+#             python_schema=core_schema.union_schema(
+#                 [core_schema.is_instance_schema(ObjectId), object_id_schema]
+#             ),
+#             serialization=core_schema.plain_serializer_function_ser_schema(
+#                 lambda x: str(x)
+#             ),
+#         )
+#
+#     @classmethod
+#     def validate(cls, value):
+#         if not ObjectId.is_valid(value):
+#             raise ValueError("Invalid id")
+#
+#         return ObjectId(value)
 

@@ -171,7 +171,6 @@ async def get_messages_after_dialog_id(receiver_id: int, message_id: ObjectIdFie
 
 
 @router.get("/dialogs")
-@cache(expire=60)
 async def get_dialogs(last_message_datetime: datetime | None = None,
                       user: Users = Depends(get_current_user)) -> list[SFastDialog]:
     """Эндпоинт получения всех диалогов пользователя, время сообщения используется для пагинации диалогов

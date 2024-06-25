@@ -1,5 +1,7 @@
 
 from fastapi import APIRouter, Depends, File, Form, UploadFile
+from fastapi_cache.decorator import cache
+
 
 from src.auth.dependencies import get_current_user
 from src.chat.constants import online_list
@@ -17,6 +19,7 @@ router = APIRouter(prefix='/users', tags=['Пользователи'])
 
 
 @router.get("/user")
+@cache(expire=60)
 async def get_my_info(
         user: Users = Depends(get_current_user)) -> SUsersMyInfo:  # испраить - другая схема - различные варианты
     'Получить модель текущего пользователя'
@@ -25,13 +28,17 @@ async def get_my_info(
 
 
 @router.get("/user{id}")
+@cache(expire=60)
 async def get_user_info(id: int,
                         latitude: str | None = None,
                         longitude: str | None = None,
                         ) -> SUsersGet:
     'Получить модель другого пользователя'
 
-    location = create_point(SLocation(latitude=latitude, longitude=longitude))
+    if latitude and longitude:
+        location = create_point(SLocation(latitude=latitude, longitude=longitude))
+    else:
+        location = None
 
     online = await find_in_redis_list(online_list, id)
     user = await UsersDAO.find_user(id=id, online=online, my_location=location)
