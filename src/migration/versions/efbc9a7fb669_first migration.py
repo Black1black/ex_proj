@@ -1,4 +1,4 @@
-"""Первая миграция
+"""First migration
 
 Revision ID: efbc9a7fb669
 Revises: 
