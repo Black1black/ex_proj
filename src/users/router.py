@@ -5,7 +5,7 @@ from src.auth.dependencies import get_current_user
 from src.chat.constants import online_list
 from src.config import settings
 from src.databases.s3_storage import S3Client
-from src.exceptions import NullData
+from src.exceptions import NullDataException, UsersNotExistsException
 from src.tasks.tasks import delete_old_pic
 from src.users.dao import UsersDAO
 from src.users.models import Users
@@ -26,15 +26,17 @@ async def get_my_info(
 
 @router.get("/user{id}")
 async def get_user_info(id: int,
-                        latitude: str | None,
-                        longitude: str | None,
-                        ) -> SUsersGet:  # испраить - другая схема - различные варианты
+                        latitude: str | None = None,
+                        longitude: str | None = None,
+                        ) -> SUsersGet:
     'Получить модель другого пользователя'
 
     location = create_point(SLocation(latitude=latitude, longitude=longitude))
 
     online = await find_in_redis_list(online_list, id)
     user = await UsersDAO.find_user(id=id, online=online, my_location=location)
+    if not user:
+        raise UsersNotExistsException
     return user
 
 
@@ -65,13 +67,13 @@ async def update_info(name: str | None = Form(None),
     # В данные для изменения попадают только не пустые значения
 
     if not data_update:
-        raise NullData
+        raise NullDataException
 
     await UsersDAO.data_update(user_id, **data_update)
-    if photo and user.photo: # TODO проверить - не удалим ли новое фото
+    if photo and user.photo:
         delete_old_pic.delay(user.photo, settings.PROFILE_BUCKET) # запустили таску на удаление старого фото из s3
 
-    return user  # TODO - вернуть инфу .
+    return {'message': 'success'}
 
 
 

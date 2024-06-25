@@ -1,10 +1,8 @@
 from datetime import datetime
 from enum import Enum
 
-from geoalchemy2 import WKTElement  # Если нужно использовать специфичный тип Geography
 from pydantic import BaseModel, EmailStr, constr, model_validator
 
-# TODO - прописать алиасы
 
 
 class SUsersAuth(BaseModel):
@@ -30,12 +28,10 @@ class SUsersAuth(BaseModel):
 
 class SUsersReg(SUsersAuth):
     'Схема данных для регистрации, расширена от схемы аутентификации'
-
     name: str
 
 
 
-# Определение Enum для статусов
 class UserStatus(str, Enum):
     NEW = 'new'
     ACTIVE = 'active'
@@ -55,12 +51,12 @@ class SUsersGet(BaseModel):
     photo: str | None
     text: str | None
     # location: WKTElement | None
-    distance: float
+    distance: float | None
     online: bool
 
 
 
-    class Config: # TODO нужно чтобы pydantic распознал схему алхимии  (1.6 последнее видео) // смотри на нашу модель не только как словарь, но и на класс у которого есть аттрибуты
+    class Config:
             populate_by_name = True
 
 

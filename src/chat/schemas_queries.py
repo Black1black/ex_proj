@@ -3,6 +3,9 @@
 
 from pydantic import BaseModel
 
+from src.chat.schemas_collections import ObjectIdField
+
+
 ################# Типизация запросов в коллекции #################
 
 
@@ -16,7 +19,7 @@ from pydantic import BaseModel
 
 class SMessagesUpdate(BaseModel):
     'Обновление статуса одного или нескольких сообщений'
-    _id: str | list[str] # ObjectId
+    _id: str | list[ObjectIdField] # str ObjectId
     read: bool | None
     delete: bool | None
 

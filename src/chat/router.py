@@ -19,7 +19,7 @@ from src.chat.schemas_queries import SMessagesUpdate
 from src.config import settings
 from src.databases.redisdb import RedisConnect
 from src.databases.s3_storage import S3Client
-from src.exceptions import NullData
+from src.exceptions import NullDataException
 from src.users.models import Users
 
 router = APIRouter(prefix='/chat', tags=['Чат'])
@@ -57,7 +57,7 @@ async def websocket_endpoint(websocket: WebSocket, user: Users = Depends(get_cur
             finally:
                 await pubsub.unsubscribe(channel)  # Отписка от канала Redis Pub/Sub
                 await redis_client.lrem(online_list, 0, user_id)  # Удаляем пользователя из онлайн списка
-                await websocket.close()  # TODO проверить нужно ли
+                await websocket.close()
 
        
  
@@ -68,29 +68,26 @@ async def websocket_endpoint(websocket: WebSocket, user: Users = Depends(get_cur
 
 @router.post("/message")
 async def send_message(text: str | None = Form(None),  # Текст сообщения TODO добавить валидацию размера текста
-                       files: List[UploadFile] | None = File(None),
-                       # Прикреплённые файлы TODO добавить валидацию и ограничение количества
-                       receiver: int = Form(),  # Получатель
-                       reply_id: ObjectIdField | None = Form(None), # ObjectId
-                       publication: str | None = Form(None),  # Ссылка на репост публикации
+                       files: List[UploadFile] | None = File(None), # TODO добавить валидацию и ограничение количества
+                       receiver: int = Form(),
+                       reply_id: ObjectIdField | None = Form(None),
                        user: Users = Depends(get_current_user)):
-    "API маршрут для отправки сообщения"
+    "Отправляем сообщение"
     user_id = user.id
 
     # TODO - добавить проверку наличия получателя
 
-
+    uploaded_files_paths = None
     if files:
         uploaded_files_paths = await S3Client.upload_on_storage(user_id, files, settings.MESSAGE_BUCKET)
 
     message_body = {
-        'files': uploaded_files_paths if files else None,
+        'files': uploaded_files_paths,
         'text': text,
-        'publication': publication
     }
 
-    if not uploaded_files_paths and not text and not publication:
-        raise NullData
+    if not uploaded_files_paths and not text:
+        raise NullDataException
 
     dialog_id = await UserDialogsDAO.find_dialogs_id(user_id, receiver)
 
@@ -108,11 +105,11 @@ async def send_message(text: str | None = Form(None),  # Текст сообще
 
     message_insert = await MessagesDAO.save_message_to_db(message)
 
-    channel = f"user_{receiver}" # Отправляем сообщение получателю
+    channel = f"user_{receiver}"
 
     insert = message_insert.model_dump_json(by_alias=True)
 
-    async with RedisConnect().get_redis_client() as redis_client: # TODO - Проверить корректность отправки
+    async with RedisConnect().get_redis_client() as redis_client:
         await redis_client.publish(channel, insert)
 
     return {"status": "Message sent"}
@@ -122,7 +119,7 @@ async def send_message(text: str | None = Form(None),  # Текст сообще
 
 
 @router.get("/message")
-async def get_one_message(message_id: ObjectIdField, # ObjectId
+async def get_one_message(message_id: ObjectIdField,
                           user: Users = Depends(get_current_user)) -> SMessage | None:  
     "Получение отдельного сообщения"
     user_id = user.id
@@ -177,10 +174,10 @@ async def get_messages_after_dialog_id(receiver_id: int, message_id: ObjectIdFie
 @cache(expire=60)
 async def get_dialogs(last_message_datetime: datetime | None = None,
                       user: Users = Depends(get_current_user)) -> list[SFastDialog]:
-    "Эндпоинт получения всех диалогов пользователя, время сообщения используется для пагинации диалогов (В списке диалогов есть последнее сообщение и его дата отправки)"
-    # TODO - добавить логику получения фото и имени собеседника
+    """Эндпоинт получения всех диалогов пользователя, время сообщения используется для пагинации диалогов
+    (В списке диалогов есть последнее сообщение и его дата отправки)"""
     user_id = user.id
     dialogs = await UserDialogsDAO.get_user_dialogs(user_id, last_message_datetime)
 
-    return dialogs # TODO mappings
+    return dialogs
 

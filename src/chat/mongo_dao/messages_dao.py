@@ -14,7 +14,6 @@ async def update_active_dialogs(user_id, receiver_id, message, s):
 
     if check_user:
         # Проверяем, инициирован ли диалог с пользователем
-        # existing_dialog = await user_dialogs_collection.find_one({"_id": user_id, "activeDialogs": {"$elemMatch": {"receiverId": receiver_id}}}, session=s)
         existing_dialog = None
 
         for dialog in check_user.get('activeDialogs', []):  # dialogs_list - ваш массив диалогов
@@ -23,29 +22,13 @@ async def update_active_dialogs(user_id, receiver_id, message, s):
                 break
 
 
-
         if existing_dialog:
-
-            # existing_dialog['lastMessage'] = message
 
             # Обновляем last_message в найденном диалоге и перемещаем его в начало массива
             await user_dialogs_collection.update_one(
                 {"_id": user_id, "activeDialogs.receiverId": receiver_id},
                 {"$set": {"activeDialogs.$.lastMessage": message},
-                 # "$pull": {"activeDialogs": {"receiverId": receiver_id}},
-                 # "$push": {"activeDialogs": {"$each": [existing_dialog,], "$position": 0}}
                  },
-                # {"_id": user_id, "activeDialogs.receiverId": receiver_id},
-                # {"$set": {"activeDialogs.$.lastMessage": message},
-                # "$pull": {"activeDialogs": {"receiverId": receiver_id}},
-                # "$push": {"activeDialogs": {"$each": [existing_dialog['activeDialogs'][0]], "$position": 0}}
-                # },
-
-             # {"_id": user_id, "activeDialogs.receiverId": receiver_id},
-                # {"$set": {"active_dialogs.$.last_message": message},
-                #  "$pull": {"active_dialogs": {"receiver_id": receiver_id}},
-                #  "$push": {"active_dialogs": {"$each": [existing_dialog['active_dialogs'][0]], "$position": 0}}
-                #  },
                 session=s
             )
 
@@ -86,26 +69,6 @@ async def update_active_dialogs(user_id, receiver_id, message, s):
         # print(new_user_dialog.model_dump(include={'_id', 'active_dialogs'}))
         await user_dialogs_collection.insert_one(new_user_dialog.model_dump(by_alias=True), session=s)
 
-#
-# {
-#   "_id": {
-#     "$oid": "655e1b2c46cb6106f1b11368"
-#   },
-#   "dialogId": "655e1b2c46cb6106f1b11367",
-#   "sender": 1,
-#   "receiver": 2,
-#   "replyId": null,
-#   "messageBody": {
-#     "files": null,
-#     "text": "апрапрапр",
-#     "publication": null
-#   },
-#   "read": false,
-#   "sendTime": {
-#     "$date": "2023-11-22T15:15:56.525Z"
-#   },
-#   "delete": false
-# }
 
 class MessagesDAO(BaseDAOmongo):
     collection = messages_collection
@@ -171,11 +134,6 @@ class MessagesDAO(BaseDAOmongo):
         ]
 
         messages = await cls.collection.aggregate(pipeline).to_list(length=limit)
-        # messages = await cls.collection.find().to_list(None)
-
-        # print(messages)
-
-
         return messages
 
 
@@ -214,7 +172,6 @@ class MessagesDAO(BaseDAOmongo):
         'Сохранение сообщения в бд и обновление последнего сообщения в диалоге'
 
         async with await client.start_session() as s:
-            # Начало транзакции
             s.start_transaction()
             try:
                 message_insert = await cls.collection.insert_one(message, session=s)
@@ -227,8 +184,6 @@ class MessagesDAO(BaseDAOmongo):
                 await update_active_dialogs(message['receiver'], message['sender'], message, s)
 
                 await s.commit_transaction()
-                # return result_id, is_new
-                # return (message)
                 return SMessage(**message)
 
 
@@ -237,6 +192,3 @@ class MessagesDAO(BaseDAOmongo):
                 raise e
 
 
-            # except Exception as e:
-            #     await s.abort_transaction()
-            #     raise e

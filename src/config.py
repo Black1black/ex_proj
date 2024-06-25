@@ -1,10 +1,9 @@
-# Храним все данные о подключениях к различным базам, почтам и т.д.
-
-
 from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
+
+    LOG_LEVEL: str
 
     DB_HOST: str
     DB_PORT: int 
@@ -46,7 +45,7 @@ class Settings(BaseSettings):
 
     @property
     def MINIO_URL(self):
-        return f'https://{self.MINIO_HOST}:{self.MINIO_PORT}'
+        return f'http://{self.MINIO_HOST}:{self.MINIO_PORT}'
 
 
 

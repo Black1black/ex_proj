@@ -6,6 +6,7 @@ from pydantic import EmailStr
 
 from src.auth.constants import access_token_name, refresh_token_name
 from src.config import settings
+from src.exceptions import CannotReplacePasswordException
 from src.users.dao import UsersDAO
 
 #------------------------------------------------------------------------------------------#
@@ -26,18 +27,16 @@ def verify_password(plain_password, hashed_password) -> bool:
 ########################################################################################
 
 
-async def replace_old_password(old_password, new_password, curretnt_user, response):
+async def replace_old_password(old_password, new_password, current_user, response):
 
-    if verify_password(old_password, curretnt_user.hashed_password):
+    if verify_password(old_password, current_user.hashed_password):
         new_password = get_password_hash(new_password)
-        await UsersDAO.data_update(curretnt_user.id, hashed_password=new_password)
+        await UsersDAO.data_update(current_user.id, hashed_password=new_password)
         response.delete_cookie(access_token_name)
         response.delete_cookie(refresh_token_name)
         return {'message': 'Вы изменили пароль'}
     else:
-        raise CannotReplacePassword # TODO Прописать ошибку
-
-
+        raise CannotReplacePasswordException # TODO Прописать ошибку
 
 
 
@@ -61,8 +60,8 @@ def create_jwt_token(data: dict, is_access: bool = True) -> str:
 
 async def authentificate_user(email: EmailStr, password: str):
     user = await UsersDAO.find_one_or_none(email=email) # Проверяем, есть ли такой пользователь
+    print(user)
     if not user or not verify_password(password, user.hashed_password):
-        # Если пользователя нет, либо пароль неверный # TODO надо проверить
         return None
     return user
 

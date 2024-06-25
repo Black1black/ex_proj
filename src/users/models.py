@@ -2,19 +2,16 @@ from geoalchemy2.types import (
     Geography,  # Geometry менее точный чем Geography, он не учитывает сферичность земли, использует плоскую модель
 )
 from sqlalchemy import (
-    Boolean,
     CheckConstraint,
     Column,
     DateTime,
     ForeignKey,
     Integer,
-    Numeric,
     String,
     func,
     or_,
     text,
 )
-from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import validates
 
 from src.databases.postgres import Base

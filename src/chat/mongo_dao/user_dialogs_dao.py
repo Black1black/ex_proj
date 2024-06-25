@@ -28,8 +28,6 @@ class UserDialogsDAO(BaseDAOmongo):
 
         result = await cls.collection.aggregate(pipeline).to_list(None)
         # return [SFastDialog(**doc) for doc in result]
-
-        # print(result)
         return result
 
 
@@ -42,8 +40,7 @@ class UserDialogsDAO(BaseDAOmongo):
         "Поиск айди нужного нам диалога"
 
         async with await client.start_session() as s:
-            # Начало транзакции
-            s.start_transaction() # TODO - возможно не нужно тут async with
+            s.start_transaction()
             try:
                 pipeline = [
                     {"$match": {"_id": user_id}},

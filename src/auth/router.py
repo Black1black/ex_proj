@@ -59,8 +59,6 @@ async def login(response: Response, user_data: SUsersAuth):
 
     # Отдаём словарь для мобильного приложения через Pydantic в camelCase
     return STokens(**tokens_dict)
-    # return {"accessToken": access_token_jwt, "refreshToken": refresh_token_jwt}#, 'userInfo': user}
-
 
 
 
@@ -92,7 +90,7 @@ async def refresh_access_token(response: Response, refresh_token: str = Depends(
         response.set_cookie(refresh_token_name, new_refresh_token, httponly=True, secure=True)
 
     tokens_dict = {"access_token": access_token_jwt, "refresh_token": new_refresh_token}
-
+    print(tokens_dict)
     # Отдаём словарь для мобильного приложения через Pydantic в camelCase
     return STokens(**tokens_dict)
 

@@ -1,4 +1,3 @@
-# from motor.motor_asyncio import AsyncIOMotorClient
 
 from src.utils.repository import AbstractRepository
 
@@ -13,7 +12,6 @@ class BaseDAOmongo(AbstractRepository):
         if count == 0:
             return None
         elif count > 1:
-            # TODO raise SomeException("Multiple documents found")
             raise Exception("Multiple documents found")
 
         else:
@@ -21,7 +19,6 @@ class BaseDAOmongo(AbstractRepository):
 
     @classmethod
     async def find_all(cls, **filter_by):
-        # collection = cls.collection
         results = await cls.collection.find(filter_by).to_list(None)
         return results
 

@@ -8,6 +8,7 @@ from fastapi import (  # Неопходимо чтобы распарсить и
 from jose import JWTError, jwt
 
 from src.auth.constants import access_token_name, refresh_token_name
+from src.auth.dao import AuthDAO
 from src.config import settings
 from src.exceptions import (  # TODO кастомные ошибки
     IncorrectTokenFormatException,
@@ -34,13 +35,15 @@ class TokenDependency:
                 token = request.headers.get('X-Refresh-Token', None)
                 # TODO - вынести заголовки в константы
             elif self.token_name == access_token_name:
+                request_result = request.headers.get('Authorization', None)
+                if request_result:
                     auth_type, auth_info = request.headers.get('Authorization', None).split()
                     if auth_type.lower() == 'bearer':
                         token = auth_info
 
 
         if not token:
-            raise TokenAbsentException  # Токен отсутствует
+            raise TokenAbsentException
         return token
 
     def __call__(self):
@@ -75,7 +78,9 @@ async def get_user_refresh_token(token: str = Depends(TokenDependency(refresh_to
         raise UserIsNotPresentException # Без комментариев, в целях безопасности>
 
     # TODO Добавить блок проверки токена в бд, если его нет - удалять из кук
-
+    validate = await AuthDAO.find_one_or_none(user_id=user.id, token=token)
+    if not validate:
+        raise IncorrectTokenFormatException
 
     return token # TODO - прописать аналогичный метод под токен
 

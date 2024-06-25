@@ -1,16 +1,9 @@
 from sqlalchemy import (
-    Boolean,
-    CheckConstraint,
     Column,
-    DateTime,
     ForeignKey,
-    Integer,
-    Numeric,
     String,
-    or_,
 )
-from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import validates
+
 
 from src.databases.postgres import Base
 

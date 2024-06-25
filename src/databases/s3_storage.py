@@ -1,7 +1,6 @@
 import asyncio
 from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import List, Tuple
 
 from aiobotocore.session import get_session
 from botocore.exceptions import ClientError
@@ -9,12 +8,7 @@ from fastapi import HTTPException
 
 from src.config import settings
 
-# http://172.18.0.4:32827/buckets
-# s3_session = aioboto3.Session(
-#     aws_access_key_id=settings.MINIO_ACCESS_KEY_ID,
-#     aws_secret_access_key=settings.MINIO_SECRET_ACCESS_KEY
-# )
-# s3_client = s3_session.client(service_name=settings.SERVICE_NAME)
+
 
 
 class S3Client:
@@ -28,7 +22,7 @@ class S3Client:
         self.config = {
             "aws_access_key_id": settings.MINIO_ACCESS_KEY_ID,
             "aws_secret_access_key": settings.MINIO_SECRET_ACCESS_KEY,
-            "endpoint_url": settings.MINIO_URL, # TODO - проверить корректность работы
+            "endpoint_url": settings.MINIO_URL,
         }
         self.bucket = bucket
         self.session = get_session()
@@ -57,7 +51,6 @@ class S3Client:
         try:
             async with self.get_client() as client:
                 await client.put_object(Body=file, Bucket=self.bucket, Key=s3_file, ContentType=content_type)
-
             return f"Upload Success to {s3_file}", s3_file  # TODO - поменять имя, Возвращает сообщение об успешной загрузке и путь к файлу
 
         except ClientError as e:
@@ -71,22 +64,35 @@ class S3Client:
         ]
 
         # Ожидаем завершения всех задач загрузки
+
         results = await asyncio.gather(*tasks, return_exceptions=True)
-    # TODO
-        # Можно добавить обработку ошибок
-        # Например, можно записать информацию об ошибках в лог или отправить уведомление об ошибке администратору системы.
+
+
+
+        # TODO Можно добавить обработку ошибок
+        # Например, можно отправить уведомление об ошибке администратору системы.
 
         # Фильтруем результаты загрузки, чтобы исключить файлы, которые не были загружены успешно
-        uploaded_files_paths = [s3_file for result, s3_file in results if isinstance(result, str) and result.startswith("Upload Success to ")]
-        # TODO проверить работоспособность на ошибки
+        uploaded_files_paths = [
+            s3_file
+            for pair in results
+            if pair is not None
+            for result, s3_file in [pair]
+            if isinstance(result, str) and result.startswith("Upload Success to ")
+        ]
+        if not uploaded_files_paths:
+            raise HTTPException(status_code=404) # TODO прописать ошибку
         return uploaded_files_paths
 
 
 
 
     async def upload_on_storage(self, user_id, files):
+        print(files)
+        if not isinstance(files, list):
+            files = [files,]
 
-        MAX_FILE_SIZE = 1000000
+        MAX_FILE_SIZE = 10000000
         ALLOWED_EXTENSIONS = ('png', 'jpg', 'jpeg', 'gif', 'mp4', 'webm')  # TODO добавить форматы
 
         # TODO - добавить ограничения в размере в зависимости от типа файла
@@ -99,7 +105,7 @@ class S3Client:
             if _file.content_type.split('/')[0] not in ['image', 'video']:
                 raise HTTPException(status_code=400, detail="Invalid file type")
 
-            if _file.filesize > MAX_FILE_SIZE:
+            if _file.size > MAX_FILE_SIZE:
                 raise HTTPException(status_code=400, detail="File size exceeded")
 
             # Генерация уникального имени файла
@@ -126,43 +132,4 @@ class S3Client:
                 print(f"File {s3_file} deleted from {self.bucket}")
         except ClientError as e:
             print(f"Error deleting file: {e}")
-
-
-    #
-    # async def get_file(self, s3_file: str, # object_name
-    #                    destination_path: str):
-    #     'Получение файла с s3'
-    #     try:
-    #         async with self.get_client() as client:
-    #             response = await client.get_object(Bucket=self.bucket, Key=s3_file)
-    #             data = await response["Body"].read()
-    #             with open(destination_path, "wb") as file:
-    #                 file.write(data)
-    #             print(f"File {s3_file} downloaded to {destination_path}")
-    #     except ClientError as e:
-    #         print(f"Error downloading file: {e}")
-
-
-#
-# @app.post("/message")
-# async def send_message(
-#         user_id = 1,
-#     text: str = Form(...),
-#     files: List[UploadFile] = File(...),
-#     receiver: int = Form(...),
-#     publication: str = Form(...),
-# ):
-#     MAX_FILE_SIZE = 1000000
-#     ALLOWED_EXTENSIONS = ('png', 'jpg', 'jpeg', 'gif', 'mp4', 'webm') # TODO добавить форматы
-#
-#
-#
-#
-#             # return file_group
-#
-#     uploaded_files_paths = await upload_on_storage(user_id, files, ALLOWED_EXTENSIONS, MAX_FILE_SIZE)
-#
-#     save_message_to_db(text, receiver, publication)
-#
-#     return {"text": text, "receiver": receiver, "publication": publication, "files": uploaded_files_paths}
 
