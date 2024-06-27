@@ -21,17 +21,13 @@ class AuthDAO(BaseDAO):
                 await session.commit()
         except (SQLAlchemyError, Exception) as e:
             if isinstance(e, SQLAlchemyError):
-                message = 'Postgres Exception'
+                message = "Postgres Exception"
             else:
-                message = 'Unknown Exception'
-            extra = {
-                'user_id': user_id,
-                'token': token
-            }
+                message = "Unknown Exception"
+            extra = {"user_id": user_id, "token": token}
 
             logger.error(
-                f'{message}: Cannot add refresh token',
+                f"{message}: Cannot add refresh token",
                 extra=extra,
-                exc_info=True # Прокинем саму ошибку в логи (Но если слишком длинный текст - неудобно будет читать)
+                exc_info=True,  # Прокинем саму ошибку в логи (Но если слишком длинный текст - неудобно будет читать)
             )
-

@@ -1,4 +1,3 @@
-
 from src.chat.collections import messages_collection, user_dialogs_collection
 from src.chat.schemas_collections import SFastDialog, SMessage, SUserDialog
 from src.dao.mongo_base import BaseDAOmongo
@@ -16,22 +15,21 @@ async def update_active_dialogs(user_id, receiver_id, message, s):
         # Проверяем, инициирован ли диалог с пользователем
         existing_dialog = None
 
-        for dialog in check_user.get('activeDialogs', []):  # dialogs_list - ваш массив диалогов
-            if dialog.get('receiverId') == receiver_id:
+        for dialog in check_user.get("activeDialogs", []):  # dialogs_list - ваш массив диалогов
+            if dialog.get("receiverId") == receiver_id:
                 existing_dialog = dialog
                 break
-
 
         if existing_dialog:
 
             # Обновляем last_message в найденном диалоге и перемещаем его в начало массива
             await user_dialogs_collection.update_one(
                 {"_id": user_id, "activeDialogs.receiverId": receiver_id},
-                {"$set": {"activeDialogs.$.lastMessage": message},
-                 },
-                session=s
+                {
+                    "$set": {"activeDialogs.$.lastMessage": message},
+                },
+                session=s,
             )
-
 
         else:
             # Добавляем новый диалог в начало active_dialogs
@@ -45,12 +43,19 @@ async def update_active_dialogs(user_id, receiver_id, message, s):
                 receiver_id=receiver_id,  # добавить receiver_id
                 receiver_name=receiver_name,
                 receiver_photo=receiver_photo,
-                last_message=message
+                last_message=message,
             )
             await user_dialogs_collection.update_one(
                 {"_id": user_id},
-                {"$push": {"activeDialogs": {"$each": [new_dialog.model_dump(by_alias=True)], "$position": 0}}},
-                session=s
+                {
+                    "$push": {
+                        "activeDialogs": {
+                            "$each": [new_dialog.model_dump(by_alias=True)],
+                            "$position": 0,
+                        }
+                    }
+                },
+                session=s,
             )
 
     else:
@@ -59,15 +64,17 @@ async def update_active_dialogs(user_id, receiver_id, message, s):
         receiver_name = receiver.name
         receiver_photo = receiver.photo
         new_dialog = SFastDialog(
-                dialog_id=message["dialogId"], # alias
-                receiver_id=receiver_id,  # добавить receiver_id
-                receiver_name=receiver_name,
-                receiver_photo=receiver_photo,
-                last_message=message
+            dialog_id=message["dialogId"],  # alias
+            receiver_id=receiver_id,  # добавить receiver_id
+            receiver_name=receiver_name,
+            receiver_photo=receiver_photo,
+            last_message=message,
         )
         new_user_dialog = SUserDialog(_id=user_id, active_dialogs=[new_dialog])
         # print(new_user_dialog.model_dump(include={'_id', 'active_dialogs'}))
-        await user_dialogs_collection.insert_one(new_user_dialog.model_dump(by_alias=True), session=s)
+        await user_dialogs_collection.insert_one(
+            new_user_dialog.model_dump(by_alias=True), session=s
+        )
 
 
 class MessagesDAO(BaseDAOmongo):
@@ -75,14 +82,10 @@ class MessagesDAO(BaseDAOmongo):
 
     @classmethod
     async def find_one_message(cls, message_id, user_id):
-        'Поиск одного конкретного сообщения'
+        "Поиск одного конкретного сообщения"
 
         message = await cls.collection.find_one(
-            {'_id': message_id,
-             '$or': [
-                 {'sender': user_id},
-                 {'receiver': user_id}
-             ]}
+            {"_id": message_id, "$or": [{"sender": user_id}, {"receiver": user_id}]}
         )
         print(type(message_id), message)
         return message
@@ -102,62 +105,55 @@ class MessagesDAO(BaseDAOmongo):
 
     @classmethod
     async def find_messages_before_message_id(cls, dialog_id, limit=15, start_id=None):
-        'Поиск сообщений в диалоге с пагинацией (поиск после указанного message_id)'
+        "Поиск сообщений в диалоге с пагинацией (поиск после указанного message_id)"
 
-        conditions = {'dialogId': str(dialog_id)}
+        conditions = {"dialogId": str(dialog_id)}
         if start_id is not None:
-            conditions['_id'] = {'$gt': start_id}
+            conditions["_id"] = {"$gt": start_id}
 
         pipeline = [
-            {'$match': conditions},
-            {'$limit': limit},
+            {"$match": conditions},
+            {"$limit": limit},
         ]
 
         messages = await cls.collection.aggregate(pipeline).to_list(length=limit)
 
         return messages
-    
 
     @classmethod
     async def find_messages_after_message_id(cls, dialog_id, limit=15, start_id=None):
-        'Поиск сообщений в диалоге с пагинацией (поиск до указанного message_id)'
+        "Поиск сообщений в диалоге с пагинацией (поиск до указанного message_id)"
 
-        conditions = {'dialogId': str(dialog_id)}
+        conditions = {"dialogId": str(dialog_id)}
         if start_id is not None:
-            conditions['_id'] = {'$lt': start_id}
+            conditions["_id"] = {"$lt": start_id}
 
         pipeline = [
-            {'$match': conditions},
-            {'$sort': {'_id': -1}},
-            {'$limit': limit},
-            {'$sort': {'_id': 1}}
+            {"$match": conditions},
+            {"$sort": {"_id": -1}},
+            {"$limit": limit},
+            {"$sort": {"_id": 1}},
         ]
 
         messages = await cls.collection.aggregate(pipeline).to_list(length=limit)
         return messages
 
-
-
-
-
-
-
     @classmethod
     async def update_messages(cls, data, user_id):
-        'Обновление статусов сообщений, или их удаление'
-        id = data.get('_id')
-        read = data.get('read')
-        delete = data.get('delete')
+        "Обновление статусов сообщений, или их удаление"
+        id = data.get("_id")
+        read = data.get("read")
+        delete = data.get("delete")
 
         # Проверяем, является ли пользователь отправителем или получателем сообщения
         message = await cls.collection.find_one({"_id": id})
         if not message:
             raise ValueError("Message with this id does not exist.")
 
-        if delete and message['sender'] == user_id:
+        if delete and message["sender"] == user_id:
             # Пользователь является отправителем и может удалить сообщение
             await cls.collection.update_one({"_id": id}, {"$set": {"delete": True}})
-        elif read and message['receiver'] == user_id:
+        elif read and message["receiver"] == user_id:
             # Пользователь является получателем и может отметить сообщение как прочитанное
             await cls.collection.update_one({"_id": id}, {"$set": {"read": True}})
         else:
@@ -169,26 +165,23 @@ class MessagesDAO(BaseDAOmongo):
 
     @classmethod
     async def save_message_to_db(cls, message):
-        'Сохранение сообщения в бд и обновление последнего сообщения в диалоге'
+        "Сохранение сообщения в бд и обновление последнего сообщения в диалоге"
 
         async with await client.start_session() as s:
             s.start_transaction()
             try:
                 message_insert = await cls.collection.insert_one(message, session=s)
                 result_id = message_insert.inserted_id
-                message.update({'_id': result_id})
+                message.update({"_id": result_id})
 
                 # Обновляем диалоги для отправителя и получателя
                 # TODO - возможно стоит использовать bulk_write
-                await update_active_dialogs(message['sender'], message['receiver'], message, s)
-                await update_active_dialogs(message['receiver'], message['sender'], message, s)
+                await update_active_dialogs(message["sender"], message["receiver"], message, s)
+                await update_active_dialogs(message["receiver"], message["sender"], message, s)
 
                 await s.commit_transaction()
                 return SMessage(**message)
 
-
             except Exception as e:
                 await s.abort_transaction()
                 raise e
-
-

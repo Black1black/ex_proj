@@ -1,4 +1,3 @@
-
 from src.databases.redisdb import RedisConnect
 
 
@@ -30,11 +29,7 @@ async def find_in_redis_list(list_name: str, value_to_check: int):
         found = await client.eval(script, 1, list_name, value_to_check)
 
     if found:
-        print(f'{value_to_check} В {list_name}')
+        print(f"{value_to_check} В {list_name}")
         return True
     else:
         return False
-
-
-
-

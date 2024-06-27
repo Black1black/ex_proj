@@ -6,13 +6,13 @@ class Settings(BaseSettings):
     LOG_LEVEL: str
 
     DB_HOST: str
-    DB_PORT: int 
-    DB_USER: str 
-    DB_PASS: str 
-    DB_NAME: str 
+    DB_PORT: int
+    DB_USER: str
+    DB_PASS: str
+    DB_NAME: str
 
-    SECRET_KEY: str 
-    ALGORITHM: str  
+    SECRET_KEY: str
+    ALGORITHM: str
 
     MONGO_HOST: str
     MONGO_PORT: int
@@ -30,7 +30,6 @@ class Settings(BaseSettings):
     MESSAGE_BUCKET: str
     PROFILE_BUCKET: str
 
-
     class Config:
         env_file = ".env"
 
@@ -41,13 +40,11 @@ class Settings(BaseSettings):
     @property
     def MONGO_URL(self):
 
-        return f'mongodb://{self.MONGO_HOST}:{self.MONGO_PORT}/?directConnection=true'
+        return f"mongodb://{self.MONGO_HOST}:{self.MONGO_PORT}/?directConnection=true"
 
     @property
     def MINIO_URL(self):
-        return f'http://{self.MINIO_HOST}:{self.MINIO_PORT}'
-
-
+        return f"http://{self.MINIO_HOST}:{self.MINIO_PORT}"
 
     @property
     def REDIS_URL(self):

@@ -34,6 +34,7 @@ frozenlist==1.4.1
 GeoAlchemy==0.7.2
 GeoAlchemy2==0.15.1
 greenlet==3.0.3
+gunicorn==22.0.0
 h11==0.14.0
 hiredis==2.3.2
 httpcore==1.0.5

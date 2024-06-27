@@ -22,7 +22,7 @@ from src.databases.s3_storage import S3Client
 from src.exceptions import NullDataException
 from src.users.models import Users
 
-router = APIRouter(prefix='/chat', tags=['Чат'])
+router = APIRouter(prefix="/chat", tags=["Чат"])
 
 
 @router.websocket("/ws/messages")
@@ -35,7 +35,7 @@ async def websocket_endpoint(websocket: WebSocket, user: Users = Depends(get_cur
     # Подписка на канал пользователя
     channel = f"user_{user_id}"
 
-    redis_connect=RedisConnect()
+    redis_connect = RedisConnect()
 
     async with redis_connect.get_redis_client() as redis_client:
         await redis_client.lpush(online_list, user_id)  # Добавляем пользователя в онлайн список
@@ -46,8 +46,8 @@ async def websocket_endpoint(websocket: WebSocket, user: Users = Depends(get_cur
                 while True:
                     message = await pubsub.get_message()  # Чтение сообщений из Redis Pub/Sub
 
-                    if message and message.get('type') == 'message':
-                        msg = message['data']
+                    if message and message.get("type") == "message":
+                        msg = message["data"]
                         await websocket.send_text(msg)
 
                     await asyncio.sleep(1)
@@ -56,22 +56,23 @@ async def websocket_endpoint(websocket: WebSocket, user: Users = Depends(get_cur
                 print(f"WebSocket error: {e}")
             finally:
                 await pubsub.unsubscribe(channel)  # Отписка от канала Redis Pub/Sub
-                await redis_client.lrem(online_list, 0, user_id)  # Удаляем пользователя из онлайн списка
+                await redis_client.lrem(
+                    online_list, 0, user_id
+                )  # Удаляем пользователя из онлайн списка
                 await websocket.close()
 
-       
- 
 
 # --------------------------------------------------------------------------------------------------------------------
 
 
-
 @router.post("/message")
-async def send_message(text: str | None = Form(None),  # Текст сообщения TODO добавить валидацию размера текста
-                       files: List[UploadFile] | None = File(None), # TODO добавить валидацию и ограничение количества
-                       receiver: int = Form(),
-                       reply_id: ObjectIdField | None = Form(None),
-                       user: Users = Depends(get_current_user)):
+async def send_message(
+    text: str | None = Form(None),  # Текст сообщения TODO добавить валидацию размера текста
+    files: List[UploadFile] | None = File(None),  # TODO добавить валидацию и ограничение количества
+    receiver: int = Form(),
+    reply_id: ObjectIdField | None = Form(None),
+    user: Users = Depends(get_current_user),
+):
     "Отправляем сообщение"
     user_id = user.id
 
@@ -79,11 +80,13 @@ async def send_message(text: str | None = Form(None),  # Текст сообще
 
     uploaded_files_paths = None
     if files:
-        uploaded_files_paths = await S3Client.upload_on_storage(user_id, files, settings.MESSAGE_BUCKET)
+        uploaded_files_paths = await S3Client.upload_on_storage(
+            user_id, files, settings.MESSAGE_BUCKET
+        )
 
     message_body = {
-        'files': uploaded_files_paths,
-        'text': text,
+        "files": uploaded_files_paths,
+        "text": text,
     }
 
     if not uploaded_files_paths and not text:
@@ -92,16 +95,14 @@ async def send_message(text: str | None = Form(None),  # Текст сообще
     dialog_id = await UserDialogsDAO.find_dialogs_id(user_id, receiver)
 
     upload_data = {
-        'dialog_id': dialog_id,
-        'sender': user_id,
-        'receiver': receiver,
-        'reply_id': reply_id,
-        'message_body': SMessageBody(**message_body)
+        "dialog_id": dialog_id,
+        "sender": user_id,
+        "receiver": receiver,
+        "reply_id": reply_id,
+        "message_body": SMessageBody(**message_body),
     }
 
-
-    message = SMessage(**upload_data).model_dump(by_alias=True, exclude='_id')
-
+    message = SMessage(**upload_data).model_dump(by_alias=True, exclude="_id")
 
     message_insert = await MessagesDAO.save_message_to_db(message)
 
@@ -119,8 +120,9 @@ async def send_message(text: str | None = Form(None),  # Текст сообще
 
 
 @router.get("/message")
-async def get_one_message(message_id: ObjectIdField,
-                          user: Users = Depends(get_current_user)) -> SMessage | None:  
+async def get_one_message(
+    message_id: ObjectIdField, user: Users = Depends(get_current_user)
+) -> SMessage | None:
     "Получение отдельного сообщения"
     user_id = user.id
     message = await MessagesDAO.find_one_message(message_id, user_id)
@@ -130,7 +132,7 @@ async def get_one_message(message_id: ObjectIdField,
 # --------------------------------------------------------------------------------------------------------------------
 
 
-@router.patch("/message") 
+@router.patch("/message")
 async def edit_message(messages_data: SMessagesUpdate, user: Users = Depends(get_current_user)):
     'Редактирование (удаление) отдельного сообщения и проставление статуса "прочитано"'
     user_id = user.id
@@ -142,13 +144,16 @@ async def edit_message(messages_data: SMessagesUpdate, user: Users = Depends(get
 
 
 @router.get("/messages_before")
-async def get_messages_before_dialog_id(receiver: int, message_id: ObjectIdField | None = None,
-                                        user: Users = Depends(get_current_user)) -> list[SMessage]:
-    'Поиск сообщений в диалоге с пагинацией (поиск до указанного message_id)'
+async def get_messages_before_dialog_id(
+    receiver: int, message_id: ObjectIdField | None = None, user: Users = Depends(get_current_user)
+) -> list[SMessage]:
+    "Поиск сообщений в диалоге с пагинацией (поиск до указанного message_id)"
 
     user_id = user.id
     dialog_id = await UserDialogsDAO.find_dialogs_id(user_id, receiver)
-    messages = await MessagesDAO.find_messages_before_message_id(dialog_id=dialog_id, start_id=message_id)
+    messages = await MessagesDAO.find_messages_before_message_id(
+        dialog_id=dialog_id, start_id=message_id
+    )
 
     return messages
 
@@ -157,12 +162,17 @@ async def get_messages_before_dialog_id(receiver: int, message_id: ObjectIdField
 
 
 @router.get("/messages_after")
-async def get_messages_after_dialog_id(receiver_id: int, message_id: ObjectIdField | None = None,
-                                       user: Users = Depends(get_current_user)) -> list[SMessage]:
-    'Поиск сообщений в диалоге с пагинацией (поиск после указанного message_id)'
+async def get_messages_after_dialog_id(
+    receiver_id: int,
+    message_id: ObjectIdField | None = None,
+    user: Users = Depends(get_current_user),
+) -> list[SMessage]:
+    "Поиск сообщений в диалоге с пагинацией (поиск после указанного message_id)"
     user_id = user.id
     dialog_id = await UserDialogsDAO.find_dialogs_id(user_id, receiver_id)
-    messages = await MessagesDAO.find_messages_after_message_id(dialog_id=dialog_id, start_id=message_id)
+    messages = await MessagesDAO.find_messages_after_message_id(
+        dialog_id=dialog_id, start_id=message_id
+    )
 
     return messages
 
@@ -171,12 +181,12 @@ async def get_messages_after_dialog_id(receiver_id: int, message_id: ObjectIdFie
 
 
 @router.get("/dialogs")
-async def get_dialogs(last_message_datetime: datetime | None = None,
-                      user: Users = Depends(get_current_user)) -> list[SFastDialog]:
+async def get_dialogs(
+    last_message_datetime: datetime | None = None, user: Users = Depends(get_current_user)
+) -> list[SFastDialog]:
     """Эндпоинт получения всех диалогов пользователя, время сообщения используется для пагинации диалогов
     (В списке диалогов есть последнее сообщение и его дата отправки)"""
     user_id = user.id
     dialogs = await UserDialogsDAO.get_user_dialogs(user_id, last_message_datetime)
 
     return dialogs
-
